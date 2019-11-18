@@ -37,7 +37,7 @@ namespace HappyTravel.Edo.ProcessDeadlinePayments
             {
                 Engine = Configuration["Vault:Engine"],
                 Role = Configuration["Vault:Role"],
-                BaseUrl = new Uri(Configuration["Vault:Endpoint"])
+                BaseUrl = new Uri(GetFromEnvironment("Vault:Endpoint"))
             }, null))
             {
                 vaultClient.Login(GetFromEnvironment("Vault:Token")).Wait();

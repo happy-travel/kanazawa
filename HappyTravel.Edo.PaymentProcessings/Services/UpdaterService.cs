@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using HappyTravel.Edo.PaymentProcessings.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace HappyTravel.Edo.PaymentProcessings.Services
 {
@@ -24,7 +26,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             {
                 stoppingToken.ThrowIfCancellationRequested();
 
-                await ProcessPaymentsOnDeadline(DateTime.UtcNow);
+                await CompletePayments(DateTime.UtcNow);
 
                 _applicationLifetime.StopApplication();
             }
@@ -37,11 +39,12 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         }
 
 
-        private async Task ProcessPaymentsOnDeadline(DateTime date)
+        private async Task CompletePayments(DateTime date)
         {
             using var client = _clientFactory.CreateClient(HttpClientNames.EdoApi);
-            // TODO: For test only. Should calls ProcessPaymentsOnDeadline endpoint
-            using var response = await client.GetAsync("/en/api/1/payments/methods");
+            var json = JsonConvert.SerializeObject(new ProcessPaymentsInfo(date));
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using var response = await client.PostAsync("/en/api/1.0/internal/payments/complete", content);
             var message = await response.Content.ReadAsStringAsync();
             _logger.LogInformation($"{response.StatusCode}: {message}");
         }

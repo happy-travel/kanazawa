@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -22,7 +23,10 @@ namespace HappyTravel.Edo.PaymentProcessings
                     webBuilder
                         .UseKestrel()
                         .UseStartup<Startup>()
-                        .UseSentry();
+                        .UseSentry(options =>
+                        {
+                            options.Dsn = Environment.GetEnvironmentVariable("HTDC_EDO_SENTRY_ENDPOINT");
+                        });
                 })
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {

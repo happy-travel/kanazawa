@@ -1,11 +1,11 @@
 ﻿using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using HappyTravel.Edo.ProcessDeadlinePayments.Models;
+using HappyTravel.Edo.PaymentProcessings.Models;
 using IdentityModel.Client;
 using Microsoft.Extensions.Options;
 
-namespace HappyTravel.Edo.ProcessDeadlinePayments.Services
+namespace HappyTravel.Edo.PaymentProcessings.Services
 {
     public class ProtectedApiBearerTokenHandler : DelegatingHandler
     {

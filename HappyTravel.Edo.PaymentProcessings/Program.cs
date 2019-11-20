@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace HappyTravel.Edo.ProcessDeadlinePayments
+namespace HappyTravel.Edo.PaymentProcessings
 {
     public class Program
     {

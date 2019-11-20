@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "HappyTravel.Edo.ProcessDeadlinePayments": {
+    "HappyTravel.Edo.PaymentProcessings": {
       "commandName": "Project",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

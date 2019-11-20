@@ -2,11 +2,11 @@
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using HappyTravel.Edo.ProcessDeadlinePayments.Models;
+using HappyTravel.Edo.PaymentProcessings.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace HappyTravel.Edo.ProcessDeadlinePayments.Services
+namespace HappyTravel.Edo.PaymentProcessings.Services
 {
     public class UpdaterService : BackgroundService
     {

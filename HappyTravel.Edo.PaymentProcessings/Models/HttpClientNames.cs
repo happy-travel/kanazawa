@@ -1,4 +1,4 @@
-﻿namespace HappyTravel.Edo.ProcessDeadlinePayments.Models
+﻿namespace HappyTravel.Edo.PaymentProcessings.Models
 {
     public static class HttpClientNames
     {

@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HappyTravel.Edo.ProcessDeadlinePayments", "HappyTravel.Edo.ProcessDeadlinePayments\HappyTravel.Edo.ProcessDeadlinePayments.csproj", "{7416CAAE-48D3-4D08-B421-638C04277E36}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HappyTravel.Edo.PaymentProcessings", "HappyTravel.Edo.PaymentProcessings\HappyTravel.Edo.PaymentProcessings.csproj", "{7416CAAE-48D3-4D08-B421-638C04277E36}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

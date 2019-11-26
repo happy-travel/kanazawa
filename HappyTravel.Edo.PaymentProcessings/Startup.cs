@@ -19,6 +19,7 @@ namespace HappyTravel.Edo.PaymentProcessings
             Configuration = configuration;
         }
 
+
         public void ConfigureServices(IServiceCollection services)
         {
             var serializationSettings = new JsonSerializerSettings
@@ -28,6 +29,7 @@ namespace HappyTravel.Edo.PaymentProcessings
             };
             JsonConvert.DefaultSettings = () => serializationSettings;
 
+            services.Configure<CompletionOptions>(Configuration.GetSection("Completion"));
 
             string clientSecret;
             string authorityUrl;
@@ -68,6 +70,7 @@ namespace HappyTravel.Edo.PaymentProcessings
             services.AddHttpClient(HttpClientNames.EdoApi, client =>
             {
                 client.BaseAddress = new Uri(edoApiUrl);
+                client.Timeout = TimeSpan.FromHours(1);
             }).AddHttpMessageHandler<ProtectedApiBearerTokenHandler>();
 
             services.AddHealthChecks();
@@ -90,6 +93,7 @@ namespace HappyTravel.Edo.PaymentProcessings
 
             return Environment.GetEnvironmentVariable(environmentVariable);
         }
+
 
         public IConfiguration Configuration { get; }
     }

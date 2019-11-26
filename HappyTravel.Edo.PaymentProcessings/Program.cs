@@ -16,24 +16,22 @@ namespace HappyTravel.Edo.PaymentProcessings
                 .RunAsync();
         }
 
-        public static IHostBuilder  CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
+
+        public static IHostBuilder CreateHostBuilder(string[] args)
+            => Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder
                         .UseKestrel()
                         .UseStartup<Startup>()
-                        .UseSentry(options =>
-                        {
-                            options.Dsn = Environment.GetEnvironmentVariable("HTDC_EDO_SENTRY_ENDPOINT");
-                        });
+                        .UseSentry(options => { options.Dsn = Environment.GetEnvironmentVariable("HTDC_EDO_SENTRY_ENDPOINT"); });
                 })
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
                     var environment = hostingContext.HostingEnvironment;
 
-                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                        .AddJsonFile($"appsettings.{environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+                    config.AddJsonFile("appsettings.json", false, true)
+                        .AddJsonFile($"appsettings.{environment.EnvironmentName}.json", true, true);
                     config.AddEnvironmentVariables();
                 })
                 .ConfigureLogging((hostingContext, logging) =>

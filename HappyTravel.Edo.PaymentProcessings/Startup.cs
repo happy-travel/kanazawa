@@ -1,6 +1,6 @@
 ﻿using System;
-using HappyTravel.Edo.ProcessDeadlinePayments.Models;
-using HappyTravel.Edo.ProcessDeadlinePayments.Services;
+using HappyTravel.Edo.PaymentProcessings.Models;
+using HappyTravel.Edo.PaymentProcessings.Services;
 using HappyTravel.VaultClient;
 using IdentityModel.Client;
 using Microsoft.AspNetCore.Builder;
@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace HappyTravel.Edo.ProcessDeadlinePayments
+namespace HappyTravel.Edo.PaymentProcessings
 {
     public class Startup
     {
@@ -18,6 +18,7 @@ namespace HappyTravel.Edo.ProcessDeadlinePayments
         {
             Configuration = configuration;
         }
+
 
         public void ConfigureServices(IServiceCollection services)
         {
@@ -28,6 +29,7 @@ namespace HappyTravel.Edo.ProcessDeadlinePayments
             };
             JsonConvert.DefaultSettings = () => serializationSettings;
 
+            services.Configure<CompletionOptions>(Configuration.GetSection("Completion"));
 
             string clientSecret;
             string authorityUrl;
@@ -68,6 +70,7 @@ namespace HappyTravel.Edo.ProcessDeadlinePayments
             services.AddHttpClient(HttpClientNames.EdoApi, client =>
             {
                 client.BaseAddress = new Uri(edoApiUrl);
+                client.Timeout = TimeSpan.FromHours(1);
             }).AddHttpMessageHandler<ProtectedApiBearerTokenHandler>();
 
             services.AddHealthChecks();
@@ -90,6 +93,7 @@ namespace HappyTravel.Edo.ProcessDeadlinePayments
 
             return Environment.GetEnvironmentVariable(environmentVariable);
         }
+
 
         public IConfiguration Configuration { get; }
     }

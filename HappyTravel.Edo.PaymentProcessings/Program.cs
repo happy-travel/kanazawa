@@ -1,10 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace HappyTravel.Edo.ProcessDeadlinePayments
+namespace HappyTravel.Edo.PaymentProcessings
 {
     public class Program
     {
@@ -15,21 +16,22 @@ namespace HappyTravel.Edo.ProcessDeadlinePayments
                 .RunAsync();
         }
 
-        public static IHostBuilder  CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
+
+        public static IHostBuilder CreateHostBuilder(string[] args)
+            => Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder
                         .UseKestrel()
                         .UseStartup<Startup>()
-                        .UseSentry();
+                        .UseSentry(options => { options.Dsn = Environment.GetEnvironmentVariable("HTDC_EDO_SENTRY_ENDPOINT"); });
                 })
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
                     var environment = hostingContext.HostingEnvironment;
 
-                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                        .AddJsonFile($"appsettings.{environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+                    config.AddJsonFile("appsettings.json", false, true)
+                        .AddJsonFile($"appsettings.{environment.EnvironmentName}.json", true, true);
                     config.AddEnvironmentVariables();
                 })
                 .ConfigureLogging((hostingContext, logging) =>

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-    <RootNamespace>HappyTravel.Edo.ProcessDeadlinePayments</RootNamespace>
+    <RootNamespace>HappyTravel.Edo.PaymentProcessings</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

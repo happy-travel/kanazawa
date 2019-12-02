@@ -1,0 +1,49 @@
+{{- $appPort := .Values.container.port -}}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ .Chart.Name }}
+spec:
+  schedule: "0 0 * * *" # Set task start time in UTC time zone ( Every Day )
+  concurrencyPolicy: "Forbid"
+  failedJobsHistoryLimit: 5
+  successfulJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          containers:
+            - name: {{ .Chart.Name }}
+              image: {{ .Values.registry }}/{{ .Chart.Name }}:{{ .Release.Namespace }}-{{ .Chart.Version }}
+              ports:
+                - containerPort: {{ $appPort }}
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /health
+                  port: {{ $appPort }}
+                  scheme: HTTP
+                initialDelaySeconds: 10
+                periodSeconds: 15
+                successThreshold: 1
+                timeoutSeconds: 5
+              readinessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /health
+                  port: {{ $appPort }}
+                  scheme: HTTP
+                periodSeconds: 15
+                successThreshold: 1
+                timeoutSeconds: 5                  
+              envFrom:
+                - configMapRef:
+                    name: {{ .Chart.Name }}-env
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 500Mi
+          imagePullSecrets:
+          - name: travel-key-registry
+          restartPolicy: OnFailure

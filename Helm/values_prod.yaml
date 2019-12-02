@@ -1,0 +1,3 @@
+env:
+  HTDC_VAULT_ENDPOINT: "https://vault.happytravel.com/v1/"
+  HTDC_EDO_SENTRY_ENDPOINT: "https://d63d5a5686114238a2a11c44e6895425@sentry.dev.happytravel.com/15"

@@ -1,0 +1,5 @@
+service:
+  name: paymentprocessings-updater
+  port: 80
+container:
+  port: 5000

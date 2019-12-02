@@ -17,7 +17,7 @@ pipeline {
     stages {
         stage("Checkout") {
             steps {
-                git branch: 'master', credentialsId: 'bitbucket', url: 'git@bitbucket.org:happytravel/payment-processing.git'
+                git branch: "${GIT_BRANCH}", credentialsId: "${GIT_CRED_ID}", url: "${GIT_URL}"
             }
         }
         stage("Force login at docker registry") {

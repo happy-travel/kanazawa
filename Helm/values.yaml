@@ -1,5 +1,5 @@
+registry: registry.dev.happytravel.com
 service:
-  name: paymentprocessings-updater
   port: 80
 container:
   port: 5000

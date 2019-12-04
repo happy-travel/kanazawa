@@ -2,16 +2,16 @@
 
 namespace HappyTravel.Edo.PaymentProcessings.Models
 {
-    public readonly struct CompletePaymentsInfo
+    public readonly struct ListOfBookingIds
     {
-        public CompletePaymentsInfo(int[] bookingIds)
+        public ListOfBookingIds(int[] bookingIds)
         {
             BookingIds = bookingIds ?? Array.Empty<int>();
         }
 
 
         /// <summary>
-        ///     List of booking ids that should be completed
+        ///     List of booking ids
         /// </summary>
         public int[] BookingIds { get; }
     }

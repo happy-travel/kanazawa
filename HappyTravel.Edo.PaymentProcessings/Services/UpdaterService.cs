@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -61,25 +62,24 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
                 return;
             }
 
-            var model = JsonConvert.DeserializeObject<ListOfBookingIds>(message);
-            if (!model.BookingIds.Any())
+            var bookingIds = JsonConvert.DeserializeObject<int[]>(message);
+            if (!bookingIds.Any())
             {
                 _logger.LogInformation("There aren't any bookings for completion");
                 return;
             }
 
-            for (var from = 0; from <= model.BookingIds.Length; from += _completionOptions.ChunkSize)
+            for (var from = 0; from <= bookingIds.Length; from += _completionOptions.ChunkSize)
             {
-                var to = Math.Min(from + _completionOptions.ChunkSize, model.BookingIds.Length);
-                var forProcess = model.BookingIds[from..to];
+                var to = Math.Min(from + _completionOptions.ChunkSize, bookingIds.Length);
+                var forProcess = bookingIds[from..to];
                 await ProcessBookings(forProcess);
             }
 
 
             async Task ProcessBookings(int[] bookingIds)
             {
-                var chunkModel = new ListOfBookingIds(bookingIds);
-                var json = JsonConvert.SerializeObject(chunkModel);
+                var json = JsonConvert.SerializeObject(bookingIds);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 using var chunkResponse = await Client.PostAsync($"{_completionOptions.Url}", content, stoppingToken);
                 var chunkMessage = await chunkResponse.Content.ReadAsStringAsync();
@@ -100,25 +100,24 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
                 return;
             }
 
-            var model = JsonConvert.DeserializeObject<ListOfBookingIds>(message);
-            if (!model.BookingIds.Any())
+            var bookingIds = JsonConvert.DeserializeObject<int[]>(message);
+            if (!bookingIds.Any())
             {
                 _logger.LogInformation("There aren't any bookings for cancellation");
                 return;
             }
 
-            for (var from = 0; from <= model.BookingIds.Length; from += _cancellationOptions.ChunkSize)
+            for (var from = 0; from <= bookingIds.Length; from += _cancellationOptions.ChunkSize)
             {
-                var to = Math.Min(from + _cancellationOptions.ChunkSize, model.BookingIds.Length);
-                var forProcess = model.BookingIds[from..to];
+                var to = Math.Min(from + _cancellationOptions.ChunkSize, bookingIds.Length);
+                var forProcess = bookingIds[from..to];
                 await ProcessBookings(forProcess);
             }
 
 
             async Task ProcessBookings(int[] bookingIds)
             {
-                var chunkModel = new ListOfBookingIds(bookingIds);
-                var json = JsonConvert.SerializeObject(chunkModel);
+                var json = JsonConvert.SerializeObject(bookingIds);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 using var chunkResponse = await Client.PostAsync($"{_cancellationOptions.Url}", content, stoppingToken);
                 var chunkMessage = await chunkResponse.Content.ReadAsStringAsync();

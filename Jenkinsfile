@@ -87,14 +87,9 @@ def getChangeAuthorName() {
 def getChangeAuthorEmail() {
     return sh(returnStdout: true, script: "git show -s --pretty=%ae").trim()
 }
-def getChangeSet() {
-    return sh(returnStdout: true, script: 'git diff-tree --no-commit-id --name-status -r HEAD').trim()
-}
-
 def getChangeLog() {
     return sh(returnStdout: true, script: "git log -3 --date=short --pretty=format:'%ad %aN <%ae> %n%x09* %s%n'").trim()
 }
-
 def notifyBuild(String buildStatus = 'STARTED') {
     buildStatus = buildStatus ?: 'SUCCESS'
 
@@ -102,7 +97,6 @@ def notifyBuild(String buildStatus = 'STARTED') {
     def shortCommitHash = getShortCommitHash()
     def changeAuthorName = getChangeAuthorName()
     def changeAuthorEmail = getChangeAuthorEmail()
-    def changeSet = getChangeSet()
     def changeLog = getChangeLog()
 
     // Default values
@@ -111,7 +105,6 @@ def notifyBuild(String buildStatus = 'STARTED') {
         "\n __**Build URL:**__ ${env.BUILD_URL} " +
         "\n __**Commit:**__ " + branchName + " " + shortCommitHash + 
         "\n __**Author:**__ " + changeAuthorName + " (" + changeAuthorEmail + ")" + 
-        "\n __**Change Set:**__ " + " \n "+ changeSet + 
         "\n \n __**ChangeLog:**__ " + " \n " + changeLog
         
     // Send message

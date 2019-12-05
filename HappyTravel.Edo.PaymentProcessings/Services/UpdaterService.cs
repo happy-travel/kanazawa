@@ -37,7 +37,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
 
                 await Task.WhenAll(
                     CancelPayments(stoppingToken),
-                    CompletePayments(stoppingToken)
+                    CapturePayments(stoppingToken)
                 );
 
                 _applicationLifetime.StopApplication();
@@ -51,7 +51,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         }
 
 
-        private async Task CompletePayments(CancellationToken stoppingToken)
+        private async Task CapturePayments(CancellationToken stoppingToken)
         {
             var date = DateTime.UtcNow;
             using var response = await Client.GetAsync($"{_completionOptions.Url}/{date:o}", stoppingToken);
@@ -65,7 +65,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             var bookingIds = JsonConvert.DeserializeObject<int[]>(message);
             if (!bookingIds.Any())
             {
-                _logger.LogInformation("There aren't any bookings for completion");
+                _logger.LogInformation("There aren't any bookings for capture");
                 return;
             }
 
@@ -83,7 +83,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 using var chunkResponse = await Client.PostAsync($"{_completionOptions.Url}", content, stoppingToken);
                 var chunkMessage = await chunkResponse.Content.ReadAsStringAsync();
-                _logger.LogInformation($"Process bookings response. status: {chunkResponse.StatusCode}. Message: {chunkMessage}");
+                _logger.LogInformation($"Capture bookings response. status: {chunkResponse.StatusCode}. Message: {chunkMessage}");
             }
         }
 
@@ -121,7 +121,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 using var chunkResponse = await Client.PostAsync($"{_cancellationOptions.Url}", content, stoppingToken);
                 var chunkMessage = await chunkResponse.Content.ReadAsStringAsync();
-                _logger.LogInformation($"Process bookings response. status: {chunkResponse.StatusCode}. Message: {chunkMessage}");
+                _logger.LogInformation($"Cancel bookings response. status: {chunkResponse.StatusCode}. Message: {chunkMessage}");
             }
         }
 

@@ -29,8 +29,6 @@ namespace HappyTravel.Edo.PaymentProcessings
             };
             JsonConvert.DefaultSettings = () => serializationSettings;
 
-            services.Configure<CompletionOptions>(Configuration.GetSection("Completion"));
-
             string clientSecret;
             string authorityUrl;
             string edoApiUrl;
@@ -53,14 +51,18 @@ namespace HappyTravel.Edo.PaymentProcessings
             }
 
             services.AddTransient<ProtectedApiBearerTokenHandler>();
-            services.Configure<ClientCredentialsTokenRequest>(options =>
-            {
-                var uri = new Uri(new Uri(authorityUrl), "/connect/token");
-                options.Address = uri.ToString();
-                options.ClientId = Configuration["Identity:ClientId"];
-                options.ClientSecret = clientSecret;
-                options.Scope = "edo";
-            });
+
+            services
+                .Configure<CompletionOptions>(Configuration.GetSection("Completion"))
+                .Configure<CancellationOptions>(Configuration.GetSection("Cancellation"))
+                .Configure<ClientCredentialsTokenRequest>(options =>
+                {
+                    var uri = new Uri(new Uri(authorityUrl), "/connect/token");
+                    options.Address = uri.ToString();
+                    options.ClientId = Configuration["Identity:ClientId"];
+                    options.ClientSecret = clientSecret;
+                    options.Scope = "edo";
+                });
 
             services.AddHttpClient(HttpClientNames.Identity, client =>
             {
@@ -85,6 +87,9 @@ namespace HappyTravel.Edo.PaymentProcessings
         }
 
 
+        public IConfiguration Configuration { get; }
+
+
         private string GetFromEnvironment(string key)
         {
             var environmentVariable = Configuration[key];
@@ -93,8 +98,5 @@ namespace HappyTravel.Edo.PaymentProcessings
 
             return Environment.GetEnvironmentVariable(environmentVariable);
         }
-
-
-        public IConfiguration Configuration { get; }
     }
 }

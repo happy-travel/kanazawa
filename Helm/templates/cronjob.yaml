@@ -4,7 +4,7 @@ kind: CronJob
 metadata:
   name: {{ .Chart.Name }}
 spec:
-  schedule: "0 0 * * *" # Set task start time in UTC time zone ( Every Day )
+  schedule: "10 1 * * *" # Set task start time in UTC time zone ( Every Day )
   concurrencyPolicy: "Forbid"
   failedJobsHistoryLimit: 5
   successfulJobsHistoryLimit: 3

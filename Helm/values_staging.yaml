@@ -1,0 +1,4 @@
+env:
+  ASPNETCORE_ENVIRONMENT: "Development"
+  HTDC_VAULT_ENDPOINT: "https://vault.staging.happytravel.com/v1/"
+  HTDC_NETSTORMING_CONNECTOR_SENTRY_ENDPOINT: "https://1c8b785911d241d382a620c5fda6a182@sentry.dev.happytravel.com/23"

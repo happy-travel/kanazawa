@@ -7,13 +7,14 @@ pipeline {
     environment {
         APP_NAME="payment-processing"
         NAMESPACE="dev"
-        GIT_URL="git@bitbucket.org:happytravel/${APP_NAME}.git"
-        GIT_CRED_ID='bitbucket'
+        GIT_URL="git@github.com:happy-travel/${APP_NAME}.git"
+        GIT_CRED_ID='github'
         GIT_BRANCH="master"
         URL_REGISTRY="registry.dev.happytravel.com"
         IMAGE_NAME="${APP_NAME}:${NAMESPACE}"
+        DISCORD_WEBHOOK_URL=credentials('discord')
     }
-    
+
     stages {
         stage("Checkout") {
             steps {
@@ -108,7 +109,7 @@ def notifyBuild(String buildStatus = 'STARTED') {
         "\n \n __**ChangeLog:**__ " + " \n " + changeLog
         
     // Send message
-    discordSend webhookURL: 'https://discordapp.com/api/webhooks/585188681892233239/eFnBXVIb-03zxCqOncAkCXvbnke02dWsDx2acpFDp1Lhe7JUyW5jGahAIH2VaiqzAbUQ',
+    discordSend webhookURL: env.DISCORD_WEBHOOK_URL,
     description: summary,
     result: currentBuild.currentResult,
     footer: currentBuild.currentResult,

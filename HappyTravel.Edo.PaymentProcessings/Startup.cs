@@ -29,26 +29,21 @@ namespace HappyTravel.Edo.PaymentProcessings
             };
             JsonConvert.DefaultSettings = () => serializationSettings;
 
-            string clientSecret;
-            string authorityUrl;
-            string edoApiUrl;
-
-            using (var vaultClient = new VaultClient.VaultClient(new VaultOptions
+            using var vaultClient = new VaultClient.VaultClient(new VaultOptions
             {
                 Engine = Configuration["Vault:Engine"],
                 Role = Configuration["Vault:Role"],
                 BaseUrl = new Uri(GetFromEnvironment("Vault:Endpoint"))
-            }, null))
-            {
-                vaultClient.Login(GetFromEnvironment("Vault:Token")).Wait();
+            });
+            
+            vaultClient.Login(GetFromEnvironment("Vault:Token")).Wait();
 
-                var jobsSettings = vaultClient.Get(Configuration["Identity:JobsOptions"]).Result;
-                clientSecret = jobsSettings[Configuration["Identity:Secret"]];
+            var jobsSettings = vaultClient.Get(Configuration["Identity:JobsOptions"]).Result;
+            var clientSecret = jobsSettings[Configuration["Identity:Secret"]];
 
-                var edoSettings = vaultClient.Get(Configuration["Edo:EdoOptions"]).Result;
-                authorityUrl = edoSettings[Configuration["Identity:Authority"]];
-                edoApiUrl = edoSettings[Configuration["Edo:Api"]];
-            }
+            var edoSettings = vaultClient.Get(Configuration["Edo:EdoOptions"]).Result;
+            var authorityUrl = edoSettings[Configuration["Identity:Authority"]];
+            var edoApiUrl = edoSettings[Configuration["Edo:Api"]];
 
             services.AddTransient<ProtectedApiBearerTokenHandler>();
 

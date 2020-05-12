@@ -14,42 +14,38 @@ spec:
       backoffLimit: 1
       template:
         spec:
-        {{- with .Values.imagePullSecrets }}
+          restartPolicy: OnFailure
+          serviceAccountName: {{ include "pp.serviceAccountName" . }}
           imagePullSecrets:
-            {{- toYaml . | nindent 8 }}
-        {{- end }}
-        restartPolicy: OnFailure        
+            - name: travel-key-registry
           containers:
-            - name: {{ .Chart.Name }}
-              securityContext:
-                {{- toYaml .Values.securityContext | nindent 12 }}            
-              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
-              ports:
-                - name: http
-                  containerPort: 80
-                  protocol: TCP
-              livenessProbe:
-                failureThreshold: 5
-                httpGet:
-                  path: /health
-                  port: http
-                  scheme: HTTP
-                initialDelaySeconds: 10
-                periodSeconds: 15
-                successThreshold: 1
-                timeoutSeconds: 5
-              readinessProbe:
-                failureThreshold: 5
-                httpGet:
-                  path: /health
-                  port: http
-                  scheme: HTTP
-                periodSeconds: 15
-                successThreshold: 1
-                timeoutSeconds: 5
-              envFrom:
-                - configMapRef:
-                    name: {{ .Chart.Name }}-env
-              resources:
-                {{- toYaml .Values.resources | nindent 12 }}
+          - name: {{ .Chart.Name }}
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            ports:
+              - name: http
+                containerPort: 80
+                protocol: TCP
+            livenessProbe:
+              failureThreshold: 5
+              httpGet:
+                path: /health
+                port: http
+                scheme: HTTP
+              initialDelaySeconds: 10
+              periodSeconds: 15
+              successThreshold: 1
+              timeoutSeconds: 5
+            readinessProbe:
+              failureThreshold: 5
+              httpGet:
+                path: /health
+                port: http
+                scheme: HTTP
+              periodSeconds: 15
+              successThreshold: 1
+              timeoutSeconds: 5
+            envFrom:
+              - configMapRef:
+                  name: {{ .Chart.Name }}-env
+                  

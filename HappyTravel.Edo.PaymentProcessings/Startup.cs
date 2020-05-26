@@ -38,10 +38,10 @@ namespace HappyTravel.Edo.PaymentProcessings
             
             vaultClient.Login(GetFromEnvironment("Vault:Token")).Wait();
 
-            var jobsSettings = vaultClient.Get(Configuration["Identity:JobsOptions"]).Result;
+            var jobsSettings = vaultClient.Get(Configuration["Identity:JobsOptions"]).GetAwaiter().GetResult();
             var clientSecret = jobsSettings[Configuration["Identity:Secret"]];
 
-            var edoSettings = vaultClient.Get(Configuration["Edo:EdoOptions"]).Result;
+            var edoSettings = vaultClient.Get(Configuration["Edo:EdoOptions"]).GetAwaiter().GetResult();
             var authorityUrl = edoSettings[Configuration["Identity:Authority"]];
             var edoApiUrl = edoSettings[Configuration["Edo:Api"]];
 

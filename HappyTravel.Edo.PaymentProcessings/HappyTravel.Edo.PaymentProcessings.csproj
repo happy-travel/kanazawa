@@ -7,9 +7,9 @@
 
   <ItemGroup>
     <PackageReference Include="HappyTravel.VaultClient" Version="1.0.5" />
-    <PackageReference Include="IdentityModel" Version="4.0.0" />
+    <PackageReference Include="IdentityModel" Version="4.3.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="Sentry.AspNetCore" Version="1.2.0" />
+    <PackageReference Include="Sentry.AspNetCore" Version="2.1.1" />
   </ItemGroup>
 
 </Project>

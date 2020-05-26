@@ -63,3 +63,4 @@ affinity: {}
 env:
   ASPNETCORE_ENVIRONMENT: "Development"
   HTDC_VAULT_ENDPOINT: "https://vault.happytravel.com/v1/"
+  HTDC_EDO_JOBS_SENTRY_ENDPOINT: "https://71a71d3e5e3141e2970a32f68b0743e6@sentry.dev.happytravel.com/7"

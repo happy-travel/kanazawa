@@ -19,15 +19,11 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         {
             _applicationLifetime = applicationLifetime;
             _logger = logger;
-            _clientFactory = clientFactory;
             _needPaymentOptions = needPaymentOptions.Value;
             _cancellationOptions = cancellationOptions.Value;
             _completionOptions = completionOptions.Value;
+            _client = clientFactory.CreateClient(HttpClientNames.EdoApi);
         }
-
-
-        private HttpClient Client => _client ??= _clientFactory.CreateClient(HttpClientNames.EdoApi);
-
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -55,7 +51,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         private async Task CapturePayments(CancellationToken stoppingToken)
         {
             var date = DateTime.UtcNow;
-            using var response = await Client.GetAsync($"{_completionOptions.Url}/{date:o}", stoppingToken);
+            using var response = await _client.GetAsync($"{_completionOptions.Url}/{date:o}", stoppingToken);
             var message = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
             {
@@ -82,7 +78,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             {
                 var json = JsonConvert.SerializeObject(forProcess);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
-                using var chunkResponse = await Client.PostAsync($"{_completionOptions.Url}", content, stoppingToken);
+                using var chunkResponse = await _client.PostAsync($"{_completionOptions.Url}", content, stoppingToken);
                 var chunkMessage = await chunkResponse.Content.ReadAsStringAsync();
                 _logger.LogInformation($"Capture bookings response. status: {chunkResponse.StatusCode}. Message: {chunkMessage}");
             }
@@ -93,7 +89,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         private async Task CancelPayments(CancellationToken stoppingToken)
         {
             var date = DateTime.UtcNow;
-            using var response = await Client.GetAsync($"{_cancellationOptions.Url}/{date:o}", stoppingToken);
+            using var response = await _client.GetAsync($"{_cancellationOptions.Url}/{date:o}", stoppingToken);
             var message = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
             {
@@ -120,7 +116,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             {
                 var json = JsonConvert.SerializeObject(forProcess);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
-                using var chunkResponse = await Client.PostAsync($"{_cancellationOptions.Url}", content, stoppingToken);
+                using var chunkResponse = await _client.PostAsync($"{_cancellationOptions.Url}", content, stoppingToken);
                 var chunkMessage = await chunkResponse.Content.ReadAsStringAsync();
                 _logger.LogInformation($"Cancel bookings response. status: {chunkResponse.StatusCode}. Message: {chunkMessage}");
             }
@@ -131,7 +127,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         private async Task NotifyNeedPayments(CancellationToken stoppingToken)
         {
             var date = DateTime.UtcNow.AddDays(3);
-            using var response = await Client.GetAsync($"{_needPaymentOptions.GetUrl}/{date:o}", stoppingToken);
+            using var response = await _client.GetAsync($"{_needPaymentOptions.GetUrl}/{date:o}", stoppingToken);
             var message = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
             {
@@ -158,7 +154,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             {
                 var json = JsonConvert.SerializeObject(forProcess);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
-                using var chunkResponse = await Client.PostAsync($"{_needPaymentOptions.ProcessUrl}", content, stoppingToken);
+                using var chunkResponse = await _client.PostAsync($"{_needPaymentOptions.ProcessUrl}", content, stoppingToken);
                 var chunkMessage = await chunkResponse.Content.ReadAsStringAsync();
                 _logger.LogInformation($"Cancel bookings response. status: {chunkResponse.StatusCode}. Message: {chunkMessage}");
             }
@@ -167,10 +163,9 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
 
         private readonly IHostApplicationLifetime _applicationLifetime;
         private readonly CancellationOptions _cancellationOptions;
-        private readonly IHttpClientFactory _clientFactory;
         private readonly NeedPaymentOptions _needPaymentOptions;
         private readonly CompletionOptions _completionOptions;
         private readonly ILogger<UpdaterService> _logger;
-        private HttpClient _client;
+        private readonly HttpClient _client;
     }
 }

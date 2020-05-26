@@ -1,4 +1,5 @@
 ﻿using System;
+using HappyTravel.Edo.PaymentProcessings.Infrastructure;
 using HappyTravel.Edo.PaymentProcessings.Models;
 using HappyTravel.Edo.PaymentProcessings.Services;
 using HappyTravel.VaultClient;
@@ -33,10 +34,10 @@ namespace HappyTravel.Edo.PaymentProcessings
             {
                 Engine = Configuration["Vault:Engine"],
                 Role = Configuration["Vault:Role"],
-                BaseUrl = new Uri(GetFromEnvironment("Vault:Endpoint"))
+                BaseUrl = new Uri(EnvironmentVariableHelper.Get("Vault:Endpoint", Configuration))
             });
             
-            vaultClient.Login(GetFromEnvironment("Vault:Token")).Wait();
+            vaultClient.Login(EnvironmentVariableHelper.Get("Vault:Token", Configuration)).Wait();
 
             var jobsSettings = vaultClient.Get(Configuration["Identity:JobsOptions"]).GetAwaiter().GetResult();
             var clientSecret = jobsSettings[Configuration["Identity:Secret"]];
@@ -84,15 +85,5 @@ namespace HappyTravel.Edo.PaymentProcessings
 
 
         public IConfiguration Configuration { get; }
-
-
-        private string GetFromEnvironment(string key)
-        {
-            var environmentVariable = Configuration[key];
-            if (environmentVariable is null)
-                throw new Exception($"Couldn't obtain the value for '{key}' configuration key.");
-
-            return Environment.GetEnvironmentVariable(environmentVariable);
-        }
     }
 }

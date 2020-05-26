@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
+using HappyTravel.Edo.PaymentProcessings.Infrastructure;
+using HappyTravel.StdOutLogger.Extensions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -40,10 +42,21 @@ namespace HappyTravel.Edo.PaymentProcessings
                         .AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
 
                     var env = hostingContext.HostingEnvironment;
-                    if (env.IsDevelopment())
+                    if (env.IsLocal())
                         logging.AddConsole();
                     else
-                        logging.AddEventSourceLogger();
+                    {
+                        logging.AddStdOutLogger(setup =>
+                        {
+                            setup.IncludeScopes = false;
+                            setup.UseUtcTimestamp = true;
+                        });
+                        logging.AddSentry(c =>
+                        {
+                            c.Dsn = EnvironmentVariableHelper.Get("Logging:Sentry:Endpoint", hostingContext.Configuration);
+                            c.Environment = env.EnvironmentName;
+                        });
+                    }
                 });
     }
 }

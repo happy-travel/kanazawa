@@ -9,12 +9,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Configuration;
 
 namespace HappyTravel.Edo.PaymentProcessings.Services
 {
     public class UpdaterService : BackgroundService
     {
-        public UpdaterService(IHostApplicationLifetime applicationLifetime, ILogger<UpdaterService> logger, IHttpClientFactory clientFactory,
+        public UpdaterService(IHostApplicationLifetime applicationLifetime, ILogger<UpdaterService> logger, IHttpClientFactory clientFactory, TracerFactory tracerFactory,
             IOptions<CompletionOptions> completionOptions, IOptions<CancellationOptions> cancellationOptions, IOptions<NeedPaymentOptions> needPaymentOptions)
         {
             _applicationLifetime = applicationLifetime;
@@ -23,128 +25,84 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             _cancellationOptions = cancellationOptions.Value;
             _completionOptions = completionOptions.Value;
             _client = clientFactory.CreateClient(HttpClientNames.EdoApi);
+            _tracer = tracerFactory.GetTracer(nameof(UpdaterService));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(ExecuteAsync)}", out var span);
+
             try
             {
                 stoppingToken.ThrowIfCancellationRequested();
-
-                await Task.WhenAll(
-                    CancelPayments(stoppingToken),
-                    CapturePayments(stoppingToken),
-                    NotifyNeedPayments(stoppingToken)
-                );
-
+                span.AddEvent("Starting booking processing");
+                
+                await CapturePayments(span, stoppingToken);
+                await CancelPayments(span, stoppingToken);
+                await NotifyNeedPayments(span, stoppingToken);
+                
+                span.AddEvent("Finished booking processing");
                 _applicationLifetime.StopApplication();
             }
 
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, ex.Message);
+                span.AddEvent($"Failed to process bookings: {ex.Message}");
+                span.End();
                 _applicationLifetime.StopApplication();
             }
         }
 
 
-        private async Task CapturePayments(CancellationToken stoppingToken)
+        private async Task CapturePayments(TelemetrySpan parentSpan, CancellationToken stoppingToken)
         {
-            var date = DateTime.UtcNow;
-            using var response = await _client.GetAsync($"{_completionOptions.Url}/{date:o}", stoppingToken);
-            var message = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogInformation($"Unsuccessful response. status: {response.StatusCode}. Message: {message}");
-                return;
-            }
-
-            var bookingIds = JsonConvert.DeserializeObject<int[]>(message);
-            if (!bookingIds.Any())
-            {
-                _logger.LogInformation("There aren't any bookings for capture");
-                return;
-            }
-
-            for (var from = 0; from <= bookingIds.Length; from += _completionOptions.ChunkSize)
-            {
-                var to = Math.Min(from + _completionOptions.ChunkSize, bookingIds.Length);
-                var forProcess = bookingIds[from..to];
-                await ProcessBookings(forProcess);
-            }
-
-
-            async Task ProcessBookings(int[] forProcess)
-            {
-                var json = JsonConvert.SerializeObject(forProcess);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                using var chunkResponse = await _client.PostAsync($"{_completionOptions.Url}", content, stoppingToken);
-                var chunkMessage = await chunkResponse.Content.ReadAsStringAsync();
-                _logger.LogInformation($"Capture bookings response. status: {chunkResponse.StatusCode}. Message: {chunkMessage}");
-            }
+            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(CapturePayments)}", parentSpan, out _);
+            
+            var requestUrl = $"{_completionOptions.Url}/{DateTime.UtcNow:o}";
+            await ProcessBookings(requestUrl, _completionOptions.Url, _completionOptions.ChunkSize, nameof(CapturePayments), stoppingToken);
         }
 
 
-        // TODO: move to separate repository
-        private async Task CancelPayments(CancellationToken stoppingToken)
+        private async Task CancelPayments(TelemetrySpan parentSpan, CancellationToken stoppingToken)
         {
-            var date = DateTime.UtcNow;
-            using var response = await _client.GetAsync($"{_cancellationOptions.Url}/{date:o}", stoppingToken);
-            var message = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogInformation($"Unsuccessful response. status: {response.StatusCode}. Message: {message}");
-                return;
-            }
-
-            var bookingIds = JsonConvert.DeserializeObject<int[]>(message);
-            if (!bookingIds.Any())
-            {
-                _logger.LogInformation("There aren't any bookings for cancellation");
-                return;
-            }
-
-            for (var from = 0; from <= bookingIds.Length; from += _cancellationOptions.ChunkSize)
-            {
-                var to = Math.Min(from + _cancellationOptions.ChunkSize, bookingIds.Length);
-                var forProcess = bookingIds[from..to];
-                await ProcessBookings(forProcess);
-            }
-
-
-            async Task ProcessBookings(int[] forProcess)
-            {
-                var json = JsonConvert.SerializeObject(forProcess);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                using var chunkResponse = await _client.PostAsync($"{_cancellationOptions.Url}", content, stoppingToken);
-                var chunkMessage = await chunkResponse.Content.ReadAsStringAsync();
-                _logger.LogInformation($"Cancel bookings response. status: {chunkResponse.StatusCode}. Message: {chunkMessage}");
-            }
+            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(CancelPayments)}", parentSpan, out _);
+            
+            var requestUrl = $"{_cancellationOptions.Url}/{DateTime.UtcNow:o}";
+            await ProcessBookings(requestUrl, _cancellationOptions.Url, _completionOptions.ChunkSize, nameof(CancelPayments), stoppingToken);
         }
 
 
-        // TODO: move to separate repository
-        private async Task NotifyNeedPayments(CancellationToken stoppingToken)
+        private async Task NotifyNeedPayments(TelemetrySpan parentSpan, CancellationToken stoppingToken)
         {
+            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(NotifyNeedPayments)}", parentSpan, out _);
+            
             var date = DateTime.UtcNow.AddDays(3);
-            using var response = await _client.GetAsync($"{_needPaymentOptions.GetUrl}/{date:o}", stoppingToken);
+            var requestUrl = $"{_needPaymentOptions.GetUrl}/{date:o}";
+            await ProcessBookings(requestUrl, _needPaymentOptions.ProcessUrl, _completionOptions.ChunkSize, nameof(NotifyNeedPayments), stoppingToken);
+        }
+
+
+        private async Task ProcessBookings(string requestUrl, string processUrl, int chunkSize, string operationName, CancellationToken stoppingToken)
+        {
+            using var response = await _client.GetAsync(requestUrl, stoppingToken);
             var message = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogInformation($"Unsuccessful response. status: {response.StatusCode}. Message: {message}");
+                _logger.LogInformation($"Unsuccessful response for operation '{operationName}'. status: {response.StatusCode}. Message: {message}");
                 return;
             }
 
             var bookingIds = JsonConvert.DeserializeObject<int[]>(message);
             if (!bookingIds.Any())
             {
-                _logger.LogInformation("There aren't any bookings for cancellation");
+                _logger.LogInformation($"There aren't any bookings for '{operationName}'");
                 return;
             }
 
             for (var from = 0; from <= bookingIds.Length; from += _cancellationOptions.ChunkSize)
             {
-                var to = Math.Min(from + _cancellationOptions.ChunkSize, bookingIds.Length);
+                var to = Math.Min(from + chunkSize, bookingIds.Length);
                 var forProcess = bookingIds[from..to];
                 await ProcessBookings(forProcess);
             }
@@ -154,9 +112,9 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             {
                 var json = JsonConvert.SerializeObject(forProcess);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
-                using var chunkResponse = await _client.PostAsync($"{_needPaymentOptions.ProcessUrl}", content, stoppingToken);
+                using var chunkResponse = await _client.PostAsync(processUrl, content, stoppingToken);
                 var chunkMessage = await chunkResponse.Content.ReadAsStringAsync();
-                _logger.LogInformation($"Cancel bookings response. status: {chunkResponse.StatusCode}. Message: {chunkMessage}");
+                _logger.LogInformation($"{chunkSize} bookings response. status: {chunkResponse.StatusCode}. Message: {chunkMessage}");
             }
         }
 
@@ -167,5 +125,6 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         private readonly CompletionOptions _completionOptions;
         private readonly ILogger<UpdaterService> _logger;
         private readonly HttpClient _client;
+        private readonly Tracer _tracer;
     }
 }

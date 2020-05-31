@@ -15,8 +15,9 @@ namespace HappyTravel.Edo.PaymentProcessings
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
+            _environment = environment;
             Configuration = configuration;
         }
 
@@ -73,6 +74,7 @@ namespace HappyTravel.Edo.PaymentProcessings
             }).AddHttpMessageHandler<ProtectedApiBearerTokenHandler>();
 
             services.AddHealthChecks();
+            services.AddTracing(_environment, Configuration);
 
             services.AddHostedService<UpdaterService>();
         }
@@ -85,5 +87,6 @@ namespace HappyTravel.Edo.PaymentProcessings
 
 
         public IConfiguration Configuration { get; }
+        private readonly IWebHostEnvironment _environment;
     }
 }

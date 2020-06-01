@@ -17,11 +17,11 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
     public class UpdaterService : BackgroundService
     {
         public UpdaterService(IHostApplicationLifetime applicationLifetime, ILogger<UpdaterService> logger, IHttpClientFactory clientFactory, TracerFactory tracerFactory,
-            IOptions<CompletionOptions> completionOptions, IOptions<CancellationOptions> cancellationOptions, IOptions<NeedPaymentOptions> needPaymentOptions)
+            IOptions<CompletionOptions> completionOptions, IOptions<CancellationOptions> cancellationOptions, IOptions<NotificationOptions> needPaymentOptions)
         {
             _applicationLifetime = applicationLifetime;
             _logger = logger;
-            _needPaymentOptions = needPaymentOptions.Value;
+            _notificationOptions = needPaymentOptions.Value;
             _cancellationOptions = cancellationOptions.Value;
             _completionOptions = completionOptions.Value;
             _client = clientFactory.CreateClient(HttpClientNames.EdoApi);
@@ -38,8 +38,8 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
                 span.AddEvent("Starting booking processing");
                 
                 await CapturePayments(span, stoppingToken);
-                await CancelPayments(span, stoppingToken);
-                await NotifyNeedPayments(span, stoppingToken);
+                await CancelInvalidBookings(span, stoppingToken);
+                await NotifyDeadlineApproaching(span, stoppingToken);
                 
                 span.AddEvent("Finished booking processing");
                 _applicationLifetime.StopApplication();
@@ -64,22 +64,22 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         }
 
 
-        private async Task CancelPayments(TelemetrySpan parentSpan, CancellationToken stoppingToken)
+        private async Task CancelInvalidBookings(TelemetrySpan parentSpan, CancellationToken stoppingToken)
         {
-            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(CancelPayments)}", parentSpan, out _);
+            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(CancelInvalidBookings)}", parentSpan, out _);
             
             var requestUrl = $"{_cancellationOptions.Url}/{DateTime.UtcNow:o}";
-            await ProcessBookings(requestUrl, _cancellationOptions.Url, _completionOptions.ChunkSize, nameof(CancelPayments), stoppingToken);
+            await ProcessBookings(requestUrl, _cancellationOptions.Url, _completionOptions.ChunkSize, nameof(CancelInvalidBookings), stoppingToken);
         }
 
 
-        private async Task NotifyNeedPayments(TelemetrySpan parentSpan, CancellationToken stoppingToken)
+        private async Task NotifyDeadlineApproaching(TelemetrySpan parentSpan, CancellationToken stoppingToken)
         {
-            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(NotifyNeedPayments)}", parentSpan, out _);
+            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(NotifyDeadlineApproaching)}", parentSpan, out _);
             
             var date = DateTime.UtcNow.AddDays(3);
-            var requestUrl = $"{_needPaymentOptions.GetUrl}/{date:o}";
-            await ProcessBookings(requestUrl, _needPaymentOptions.ProcessUrl, _completionOptions.ChunkSize, nameof(NotifyNeedPayments), stoppingToken);
+            var requestUrl = $"{_notificationOptions.Url}/{date:o}";
+            await ProcessBookings(requestUrl, _notificationOptions.Url, _completionOptions.ChunkSize, nameof(NotifyDeadlineApproaching), stoppingToken);
         }
 
 
@@ -121,7 +121,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
 
         private readonly IHostApplicationLifetime _applicationLifetime;
         private readonly CancellationOptions _cancellationOptions;
-        private readonly NeedPaymentOptions _needPaymentOptions;
+        private readonly NotificationOptions _notificationOptions;
         private readonly CompletionOptions _completionOptions;
         private readonly ILogger<UpdaterService> _logger;
         private readonly HttpClient _client;

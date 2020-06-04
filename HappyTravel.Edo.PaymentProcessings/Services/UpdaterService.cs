@@ -59,8 +59,8 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         {
             using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(CapturePayments)}", parentSpan, out _);
             
-            var requestUrl = $"{_completionOptions.Url}/{DateTime.UtcNow:o}";
-            await ProcessBookings(requestUrl, _completionOptions.Url, _completionOptions.ChunkSize, nameof(CapturePayments), stoppingToken);
+            var getUrl = $"{_completionOptions.Url}/{DateTime.UtcNow:o}";
+            await ProcessBookings(getUrl, _completionOptions.Url, _completionOptions.ChunkSize, nameof(CapturePayments), stoppingToken);
         }
 
 
@@ -68,8 +68,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         {
             using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(CancelInvalidBookings)}", parentSpan, out _);
             
-            var requestUrl = $"{_cancellationOptions.Url}/{DateTime.UtcNow:o}";
-            await ProcessBookings(requestUrl, _cancellationOptions.Url, _completionOptions.ChunkSize, nameof(CancelInvalidBookings), stoppingToken);
+            await ProcessBookings(_cancellationOptions.Url, _cancellationOptions.Url, _completionOptions.ChunkSize, nameof(CancelInvalidBookings), stoppingToken);
         }
 
 
@@ -77,9 +76,8 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         {
             using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(NotifyDeadlineApproaching)}", parentSpan, out _);
             
-            var date = DateTime.UtcNow.AddDays(3);
-            var requestUrl = $"{_notificationOptions.Url}/{date:o}";
-            await ProcessBookings(requestUrl, _notificationOptions.Url, _completionOptions.ChunkSize, nameof(NotifyDeadlineApproaching), stoppingToken);
+            var getUrl = $"{_notificationOptions.Url}/{DateTime.UtcNow:o}";
+            await ProcessBookings(getUrl, _notificationOptions.Url, _completionOptions.ChunkSize, nameof(NotifyDeadlineApproaching), stoppingToken);
         }
 
 

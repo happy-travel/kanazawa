@@ -32,16 +32,16 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             await TokenSemaphore.WaitAsync();
             var now = DateTime.UtcNow;
             // We need to cache token because we will send several requests in short periods.
-            if (!_tokenInfo.Equals(default) && _tokenInfo.ExpiryDate >= now)
-                return _tokenInfo;
+            if (_tokenInfo.Equals(default) || _tokenInfo.ExpiryDate < now)
+            {
+                var client = _clientFactory.CreateClient(HttpClientNames.Identity);
+                // request the access token token
+                var tokenResponse = await client.RequestClientCredentialsTokenAsync(_tokenRequest);
+                if (tokenResponse.IsError)
+                    throw new HttpRequestException($"Something went wrong while requesting the access token. Error: {tokenResponse.Error}");
 
-            var client = _clientFactory.CreateClient(HttpClientNames.Identity);
-            // request the access token token
-            var tokenResponse = await client.RequestClientCredentialsTokenAsync(_tokenRequest);
-            if (tokenResponse.IsError)
-                throw new HttpRequestException($"Something went wrong while requesting the access token. Error: {tokenResponse.Error}");
-
-            _tokenInfo = (tokenResponse.AccessToken, now.AddSeconds(tokenResponse.ExpiresIn));
+                _tokenInfo = (tokenResponse.AccessToken, now.AddSeconds(tokenResponse.ExpiresIn));
+            }
 
             TokenSemaphore.Release();
             return _tokenInfo;

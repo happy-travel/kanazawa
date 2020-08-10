@@ -1,11 +1,11 @@
 replicaCount: 1
 
 image:
-  repository: registry.dev.happytravel.com/pp
+  repository: registry.happytravel.com/pp
   tag: latest
   pullPolicy: Always
 imagePullSecrets: 
-  - name: travel-key-registry
+  - name: travel-registry
 nameOverride: ""
 fullnameOverride: ""
 

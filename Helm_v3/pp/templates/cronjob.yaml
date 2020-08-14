@@ -17,7 +17,7 @@ spec:
           restartPolicy: OnFailure
           serviceAccountName: {{ include "pp.serviceAccountName" . }}
           imagePullSecrets:
-            - name: travel-key-registry
+            - name: travel-registry
           containers:
           - name: {{ .Chart.Name }}
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

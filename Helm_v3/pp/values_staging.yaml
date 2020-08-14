@@ -4,8 +4,7 @@ image:
   repository: registry.happytravel.com/pp
   tag: latest
   pullPolicy: Always
-imagePullSecrets: 
-  - name: travel-registry
+  pullSecret: travel-registry
 nameOverride: ""
 fullnameOverride: ""
 

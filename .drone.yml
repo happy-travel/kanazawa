@@ -60,8 +60,8 @@ steps:
     registry: registry.happytravel.com
     repo: registry.happytravel.com/pp
     tags:
-      - ${DRONE_COMMIT_SHA:0:7}
-      - ${DRONE_COMMIT_BRANCH}
+      - ${DRONE_COMMIT_SHA:0:7}-dev
+      - ${DRONE_COMMIT_BRANCH}-dev
     force_tag: true
     use_cache: true
     username:
@@ -83,7 +83,7 @@ steps:
     namespace: dev
     skip_tls_verify: true
     wait_for_upgrade: true
-    values: image.tag=${DRONE_COMMIT_SHA:0:7}
+    values: image.tag=${DRONE_COMMIT_SHA:0:7}-dev
   environment:
     KUBE_API_SERVER:
       from_secret: KUBERNETES_DEV_API

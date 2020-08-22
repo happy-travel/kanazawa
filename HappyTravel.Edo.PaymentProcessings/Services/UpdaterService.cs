@@ -87,7 +87,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             var message = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogInformation($"Unsuccessful response for operation '{operationName}'. status: {response.StatusCode}. Message: {message}");
+                _logger.LogCritical($"Unsuccessful response for operation '{operationName}'. status: {response.StatusCode}. Message: {message}");
                 return;
             }
 
@@ -102,17 +102,30 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             {
                 var to = Math.Min(from + chunkSize, bookingIds.Length);
                 var forProcess = bookingIds[from..to];
-                await ProcessBookings(forProcess);
+                await Process(forProcess);
             }
 
 
-            async Task ProcessBookings(int[] forProcess)
+            async Task Process(int[] forProcess)
             {
                 var json = JsonConvert.SerializeObject(forProcess);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 using var chunkResponse = await _client.PostAsync(processUrl, content, stoppingToken);
                 var chunkMessage = await chunkResponse.Content.ReadAsStringAsync();
-                _logger.LogInformation($"{chunkSize} bookings response. status: {chunkResponse.StatusCode}. Message: {chunkMessage}");
+
+                if (chunkResponse.IsSuccessStatusCode)
+                {
+                    var operationResult = JsonConvert.DeserializeObject<BatchOperationResult>(chunkMessage);
+                    if(operationResult.HasErrors)
+                        _logger.LogCritical($"{chunkSize} bookings response. status: {chunkResponse.StatusCode}. Message: {operationResult.Message}");
+                    else
+                        _logger.LogInformation($"{chunkSize} bookings response. status: {chunkResponse.StatusCode}. Message: {operationResult.Message}");
+                }
+
+                else
+                {
+                    _logger.LogCritical($"{chunkSize} bookings response. status: {chunkResponse.StatusCode}. Message: {chunkMessage}");
+                }    
             }
         }
 

@@ -51,6 +51,7 @@ namespace HappyTravel.Edo.PaymentProcessings
 
             services
                 .Configure<CompletionOptions>(Configuration.GetSection("Completion"))
+                .Configure<ChargeOptions>(Configuration.GetSection("Charge"))
                 .Configure<CancellationOptions>(Configuration.GetSection("Cancellation"))
                 .Configure<NotificationOptions>(Configuration.GetSection("Notification"))
                 .Configure<ClientCredentialsTokenRequest>(options =>

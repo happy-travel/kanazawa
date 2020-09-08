@@ -16,14 +16,16 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
 {
     public class UpdaterService : BackgroundService
     {
-        public UpdaterService(IHostApplicationLifetime applicationLifetime, ILogger<UpdaterService> logger, IHttpClientFactory clientFactory, TracerFactory tracerFactory,
-            IOptions<CompletionOptions> completionOptions, IOptions<CancellationOptions> cancellationOptions, IOptions<NotificationOptions> needPaymentOptions)
+        public UpdaterService(IHostApplicationLifetime applicationLifetime, ILogger<UpdaterService> logger, IHttpClientFactory clientFactory,
+            TracerFactory tracerFactory, IOptions<CompletionOptions> completionOptions, IOptions<CancellationOptions> cancellationOptions,
+            IOptions<NotificationOptions> needPaymentOptions, IOptions<ChargeOptions> chargeOptions)
         {
             _applicationLifetime = applicationLifetime;
             _logger = logger;
             _notificationOptions = needPaymentOptions.Value;
             _cancellationOptions = cancellationOptions.Value;
             _completionOptions = completionOptions.Value;
+            _chargeOptions = chargeOptions.Value;
             _client = clientFactory.CreateClient(HttpClientNames.EdoApi);
             _tracer = tracerFactory.GetTracer(nameof(UpdaterService));
         }
@@ -38,6 +40,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
                 span.AddEvent("Starting booking processing");
                 
                 await CapturePayments(span, stoppingToken);
+                await ChargePayments(span, stoppingToken);
                 await CancelInvalidBookings(span, stoppingToken);
                 await NotifyDeadlineApproaching(span, stoppingToken);
                 
@@ -61,6 +64,17 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             
             var getUrl = $"{_completionOptions.Url}/{DateTime.UtcNow:o}";
             await ProcessBookings(getUrl, _completionOptions.Url, _completionOptions.ChunkSize, nameof(CapturePayments), stoppingToken);
+        }
+
+
+        private async Task ChargePayments(TelemetrySpan parentSpan, CancellationToken stoppingToken)
+        {
+            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(ChargePayments)}", parentSpan, out _);
+
+            var date = DateTime.UtcNow.AddDays(_chargeOptions.DaysBeforeDeadline);
+
+            var getUrl = $"{_chargeOptions.Url}/{date:o}";
+            await ProcessBookings(getUrl, _chargeOptions.Url, _chargeOptions.ChunkSize, nameof(ChargePayments), stoppingToken);
         }
 
 
@@ -134,6 +148,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         private readonly CancellationOptions _cancellationOptions;
         private readonly NotificationOptions _notificationOptions;
         private readonly CompletionOptions _completionOptions;
+        private readonly ChargeOptions _chargeOptions;
         private readonly ILogger<UpdaterService> _logger;
         private readonly HttpClient _client;
         private readonly Tracer _tracer;

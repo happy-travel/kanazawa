@@ -42,7 +42,8 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
                 await CapturePayments(span, stoppingToken);
                 await ChargePayments(span, stoppingToken);
                 await CancelInvalidBookings(span, stoppingToken);
-                await NotifyDeadlineApproaching(span, stoppingToken);
+                await SendAgentSummaryReports(span, stoppingToken);
+                await SendAdministratorSummaryReports(span, stoppingToken);
                 
                 span.AddEvent("Finished booking processing");
                 _applicationLifetime.StopApplication();
@@ -86,14 +87,36 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         }
 
 
-        private async Task NotifyDeadlineApproaching(TelemetrySpan parentSpan, CancellationToken stoppingToken)
+        private async Task SendAgentSummaryReports(TelemetrySpan parentSpan, CancellationToken stoppingToken)
         {
-            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(NotifyDeadlineApproaching)}", parentSpan, out _);
+            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(SendAgentSummaryReports)}", parentSpan, out _);
             
-            var getUrl = $"{_notificationOptions.Url}/{DateTime.UtcNow:o}";
-            await ProcessBookings(getUrl, _notificationOptions.Url, _completionOptions.ChunkSize, nameof(NotifyDeadlineApproaching), stoppingToken);
+            var requestUrl = $"{_notificationOptions.Url}/booking-summary-agents";
+            await ProcessSingleRequest(requestUrl, nameof(SendAgentSummaryReports), stoppingToken);
+        }
+        
+        
+        private async Task SendAdministratorSummaryReports(TelemetrySpan parentSpan, CancellationToken stoppingToken)
+        {
+            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(SendAdministratorSummaryReports)}", parentSpan, out _);
+            
+            var requestUrl = $"{_notificationOptions.Url}/booking-summary-administrators";
+            await ProcessSingleRequest(requestUrl, nameof(SendAdministratorSummaryReports), stoppingToken);
         }
 
+
+        private async Task ProcessSingleRequest(string requestUrl, string operationName, CancellationToken stoppingToken)
+        {
+            using var response = await _client.PostAsync(requestUrl, new StringContent(string.Empty), stoppingToken);
+            var message = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogCritical($"Unsuccessful response for operation '{operationName}'. status: {response.StatusCode}. Message: {message}");
+            }
+            
+            _logger.LogInformation($"Processing operation {operationName} finished successfully");
+        }
+        
 
         private async Task ProcessBookings(string requestUrl, string processUrl, int chunkSize, string operationName, CancellationToken stoppingToken)
         {

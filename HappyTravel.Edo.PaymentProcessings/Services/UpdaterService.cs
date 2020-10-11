@@ -91,7 +91,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         {
             using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(SendAgentSummaryReports)}", parentSpan, out _);
             
-            var requestUrl = $"{_notificationOptions.Url}/booking-summary-agents";
+            var requestUrl = $"{_notificationOptions.Url}/agent-summary/send";
             await ProcessSingleRequest(requestUrl, nameof(SendAgentSummaryReports), stoppingToken);
         }
         
@@ -100,7 +100,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         {
             using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(SendAdministratorSummaryReports)}", parentSpan, out _);
             
-            var requestUrl = $"{_notificationOptions.Url}/booking-summary-administrators";
+            var requestUrl = $"{_notificationOptions.Url}/administrator-summary/send";
             await ProcessSingleRequest(requestUrl, nameof(SendAdministratorSummaryReports), stoppingToken);
         }
 

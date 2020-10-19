@@ -44,6 +44,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
                 await CancelInvalidBookings(span, stoppingToken);
                 await SendAgentSummaryReports(span, stoppingToken);
                 await SendAdministratorSummaryReports(span, stoppingToken);
+                await SendAdministratorPaymentsSummaryReports(span, stoppingToken);
                 
                 span.AddEvent("Finished booking processing");
                 _applicationLifetime.StopApplication();
@@ -103,8 +104,17 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             var requestUrl = $"{_notificationOptions.Url}/administrator-summary/send";
             await ProcessSingleRequest(requestUrl, nameof(SendAdministratorSummaryReports), stoppingToken);
         }
+        
+        
+        private async Task SendAdministratorPaymentsSummaryReports(TelemetrySpan parentSpan, CancellationToken stoppingToken)
+        {
+            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(SendAdministratorPaymentsSummaryReports)}", parentSpan, out _);
+            
+            var requestUrl = $"{_notificationOptions.Url}/administrator-payment-summary/send";
+            await ProcessSingleRequest(requestUrl, nameof(SendAdministratorPaymentsSummaryReports), stoppingToken);
+        }
 
-
+        
         private async Task ProcessSingleRequest(string requestUrl, string operationName, CancellationToken stoppingToken)
         {
             using var response = await _client.PostAsync(requestUrl, new StringContent(string.Empty), stoppingToken);
@@ -112,6 +122,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogCritical($"Unsuccessful response for operation '{operationName}'. status: {response.StatusCode}. Message: {message}");
+                return;
             }
             
             _logger.LogInformation($"Processing operation {operationName} finished successfully");

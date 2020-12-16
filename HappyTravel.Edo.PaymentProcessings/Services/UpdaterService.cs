@@ -18,7 +18,8 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
     {
         public UpdaterService(IHostApplicationLifetime applicationLifetime, ILogger<UpdaterService> logger, IHttpClientFactory clientFactory,
             TracerFactory tracerFactory, IOptions<CompletionOptions> completionOptions, IOptions<CancellationOptions> cancellationOptions,
-            IOptions<NotificationOptions> needPaymentOptions, IOptions<ChargeOptions> chargeOptions)
+            IOptions<NotificationOptions> needPaymentOptions, IOptions<ChargeOptions> chargeOptions, 
+            IOptions<MarkupBonusMaterializationOptions> markupBonusOptions)
         {
             _applicationLifetime = applicationLifetime;
             _logger = logger;
@@ -26,6 +27,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             _cancellationOptions = cancellationOptions.Value;
             _completionOptions = completionOptions.Value;
             _chargeOptions = chargeOptions.Value;
+            _markupBonusOptions = markupBonusOptions.Value;
             _client = clientFactory.CreateClient(HttpClientNames.EdoApi);
             _tracer = tracerFactory.GetTracer(nameof(UpdaterService));
         }
@@ -45,6 +47,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
                 await SendAgentSummaryReports(span, stoppingToken);
                 await SendAdministratorSummaryReports(span, stoppingToken);
                 await SendAdministratorPaymentsSummaryReports(span, stoppingToken);
+                await MaterializeMarkupBonuses(span, stoppingToken);
                 
                 span.AddEvent("Finished booking processing");
                 _applicationLifetime.StopApplication();
@@ -178,11 +181,21 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         }
 
 
+        private async Task MaterializeMarkupBonuses(TelemetrySpan parentSpan, CancellationToken stoppingToken)
+        {
+            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(MaterializeMarkupBonuses)}", parentSpan, out _);
+            
+            var requestUrl = $"{_markupBonusOptions.Url}";
+            await ProcessSingleRequest(requestUrl, nameof(MaterializeMarkupBonuses), stoppingToken);
+        }
+
+
         private readonly IHostApplicationLifetime _applicationLifetime;
         private readonly CancellationOptions _cancellationOptions;
         private readonly NotificationOptions _notificationOptions;
         private readonly CompletionOptions _completionOptions;
         private readonly ChargeOptions _chargeOptions;
+        private readonly MarkupBonusMaterializationOptions _markupBonusOptions;
         private readonly ILogger<UpdaterService> _logger;
         private readonly HttpClient _client;
         private readonly Tracer _tracer;

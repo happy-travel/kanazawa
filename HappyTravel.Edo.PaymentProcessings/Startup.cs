@@ -54,6 +54,7 @@ namespace HappyTravel.Edo.PaymentProcessings
                 .Configure<ChargeOptions>(Configuration.GetSection("Charge"))
                 .Configure<CancellationOptions>(Configuration.GetSection("Cancellation"))
                 .Configure<NotificationOptions>(Configuration.GetSection("Notification"))
+                .Configure<MarkupBonusMaterializationOptions>(Configuration.GetSection("MarkupBonusMaterialization"))
                 .Configure<ClientCredentialsTokenRequest>(options =>
                 {
                     var uri = new Uri(new Uri(authorityUrl), "/connect/token");

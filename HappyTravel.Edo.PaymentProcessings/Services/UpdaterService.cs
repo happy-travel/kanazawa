@@ -185,8 +185,8 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         {
             using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(MaterializeMarkupBonuses)}", parentSpan, out _);
             
-            var requestUrl = $"{_markupBonusOptions.Url}";
-            await ProcessSingleRequest(requestUrl, nameof(MaterializeMarkupBonuses), stoppingToken);
+            var getUrl = $"{_markupBonusOptions.Url}/{DateTime.UtcNow:o}";
+            await ProcessBookings(getUrl, _markupBonusOptions.Url, _markupBonusOptions.ChunkSize, nameof(MaterializeMarkupBonuses), stoppingToken);
         }
 
 

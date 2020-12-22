@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
 
 ARG VAULT_TOKEN
 ENV HTDC_VAULT_TOKEN=$VAULT_TOKEN
@@ -7,7 +7,7 @@ ENV ASPNETCORE_URLS http://*:80
 EXPOSE 80
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 ARG GITHUB_TOKEN
 ARG Configuration=Release
 WORKDIR /src

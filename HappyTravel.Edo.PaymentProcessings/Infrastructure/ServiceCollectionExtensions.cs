@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Trace.Samplers;
+using OpenTelemetry;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 
 namespace HappyTravel.Edo.PaymentProcessings.Infrastructure
 {
@@ -25,17 +25,17 @@ namespace HappyTravel.Edo.PaymentProcessings.Infrastructure
             }
             
             var serviceName = $"{environment.ApplicationName}-{environment.EnvironmentName}";
-            services.AddOpenTelemetry(builder =>
+            services.AddOpenTelemetryTracing(builder =>
             {
-                builder.UseJaeger(options =>
+                builder
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName))
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddJaegerExporter(options =>
                     {
-                        options.ServiceName = serviceName;
                         options.AgentHost = agentHost;
                         options.AgentPort = agentPort;
                     })
-                    .AddRequestAdapter()
-                    .AddDependencyAdapter()
-                    .SetResource(Resources.CreateServiceResource(serviceName))
                     .SetSampler(new AlwaysOnSampler());
             });
 

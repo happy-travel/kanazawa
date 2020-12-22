@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -9,15 +10,13 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
 
 namespace HappyTravel.Edo.PaymentProcessings.Services
 {
     public class UpdaterService : BackgroundService
     {
         public UpdaterService(IHostApplicationLifetime applicationLifetime, ILogger<UpdaterService> logger, IHttpClientFactory clientFactory,
-            TracerFactory tracerFactory, IOptions<CompletionOptions> completionOptions, IOptions<CancellationOptions> cancellationOptions,
+            IOptions<CompletionOptions> completionOptions, IOptions<CancellationOptions> cancellationOptions,
             IOptions<NotificationOptions> needPaymentOptions, IOptions<ChargeOptions> chargeOptions, 
             IOptions<MarkupBonusMaterializationOptions> markupBonusOptions)
         {
@@ -29,52 +28,53 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
             _chargeOptions = chargeOptions.Value;
             _markupBonusOptions = markupBonusOptions.Value;
             _client = clientFactory.CreateClient(HttpClientNames.EdoApi);
-            _tracer = tracerFactory.GetTracer(nameof(UpdaterService));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(ExecuteAsync)}", out var span);
+            using var activity = _activitySource.StartActivity($"{nameof(ExecuteAsync)}");
 
             try
             {
                 stoppingToken.ThrowIfCancellationRequested();
-                span.AddEvent("Starting booking processing");
                 
-                await CapturePayments(span, stoppingToken);
-                await ChargePayments(span, stoppingToken);
-                await CancelInvalidBookings(span, stoppingToken);
-                await SendAgentSummaryReports(span, stoppingToken);
-                await SendAdministratorSummaryReports(span, stoppingToken);
-                await SendAdministratorPaymentsSummaryReports(span, stoppingToken);
-                await MaterializeMarkupBonuses(span, stoppingToken);
+                await CapturePayments(activity, stoppingToken);
+                await ChargePayments(activity, stoppingToken);
+                await CancelInvalidBookings(activity, stoppingToken);
+                await SendAgentSummaryReports(activity, stoppingToken);
+                await SendAdministratorSummaryReports(activity, stoppingToken);
+                await SendAdministratorPaymentsSummaryReports(activity, stoppingToken);
+                await MaterializeMarkupBonuses(activity, stoppingToken);
                 
-                span.AddEvent("Finished booking processing");
+                activity?.AddTag("state", "Finished booking processing");
                 _applicationLifetime.StopApplication();
             }
 
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, ex.Message);
-                span.AddEvent($"Failed to process bookings: {ex.Message}");
-                span.End();
+                activity?.AddTag("state", $"Failed to process bookings: {ex.Message}");
                 _applicationLifetime.StopApplication();
             }
         }
 
 
-        private async Task CapturePayments(TelemetrySpan parentSpan, CancellationToken stoppingToken)
+        private async Task CapturePayments(Activity? parentActivity, CancellationToken stoppingToken)
         {
-            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(CapturePayments)}", parentSpan, out _);
+            using var activity = parentActivity is not null 
+                ? _activitySource.StartActivity($"{nameof(CapturePayments)}", ActivityKind.Internal, parentActivity.Context)
+                : _activitySource.StartActivity($"{nameof(CapturePayments)}");
             
             var getUrl = $"{_completionOptions.Url}/{DateTime.UtcNow:o}";
             await ProcessBookings(getUrl, _completionOptions.Url, _completionOptions.ChunkSize, nameof(CapturePayments), stoppingToken);
         }
 
 
-        private async Task ChargePayments(TelemetrySpan parentSpan, CancellationToken stoppingToken)
+        private async Task ChargePayments(Activity? parentActivity, CancellationToken stoppingToken)
         {
-            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(ChargePayments)}", parentSpan, out _);
+            using var activity = parentActivity is not null 
+                ? _activitySource.StartActivity($"{nameof(ChargePayments)}", ActivityKind.Internal, parentActivity.Context)
+                : _activitySource.StartActivity($"{nameof(ChargePayments)}");
 
             var date = DateTime.UtcNow.AddDays(_chargeOptions.DaysBeforeDeadline);
 
@@ -83,35 +83,43 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         }
 
 
-        private async Task CancelInvalidBookings(TelemetrySpan parentSpan, CancellationToken stoppingToken)
+        private async Task CancelInvalidBookings(Activity? parentActivity, CancellationToken stoppingToken)
         {
-            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(CancelInvalidBookings)}", parentSpan, out _);
+            using var activity = parentActivity is not null 
+                ? _activitySource.StartActivity($"{nameof(CancelInvalidBookings)}", ActivityKind.Internal, parentActivity.Context)
+                : _activitySource.StartActivity($"{nameof(CancelInvalidBookings)}");
             
             await ProcessBookings(_cancellationOptions.Url, _cancellationOptions.Url, _completionOptions.ChunkSize, nameof(CancelInvalidBookings), stoppingToken);
         }
 
 
-        private async Task SendAgentSummaryReports(TelemetrySpan parentSpan, CancellationToken stoppingToken)
+        private async Task SendAgentSummaryReports(Activity? parentActivity, CancellationToken stoppingToken)
         {
-            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(SendAgentSummaryReports)}", parentSpan, out _);
+            using var activity = parentActivity is not null 
+                ? _activitySource.StartActivity($"{nameof(SendAgentSummaryReports)}", ActivityKind.Internal, parentActivity.Context)
+                : _activitySource.StartActivity($"{nameof(SendAgentSummaryReports)}");
             
             var requestUrl = $"{_notificationOptions.Url}/agent-summary/send";
             await ProcessSingleRequest(requestUrl, nameof(SendAgentSummaryReports), stoppingToken);
         }
         
         
-        private async Task SendAdministratorSummaryReports(TelemetrySpan parentSpan, CancellationToken stoppingToken)
+        private async Task SendAdministratorSummaryReports(Activity? parentActivity, CancellationToken stoppingToken)
         {
-            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(SendAdministratorSummaryReports)}", parentSpan, out _);
+            using var activity = parentActivity is not null 
+                ? _activitySource.StartActivity($"{nameof(SendAdministratorSummaryReports)}", ActivityKind.Internal, parentActivity.Context)
+                : _activitySource.StartActivity($"{nameof(SendAdministratorSummaryReports)}");
             
             var requestUrl = $"{_notificationOptions.Url}/administrator-summary/send";
             await ProcessSingleRequest(requestUrl, nameof(SendAdministratorSummaryReports), stoppingToken);
         }
         
         
-        private async Task SendAdministratorPaymentsSummaryReports(TelemetrySpan parentSpan, CancellationToken stoppingToken)
+        private async Task SendAdministratorPaymentsSummaryReports(Activity? parentActivity, CancellationToken stoppingToken)
         {
-            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(SendAdministratorPaymentsSummaryReports)}", parentSpan, out _);
+            using var activity = parentActivity is not null 
+                ? _activitySource.StartActivity($"{nameof(SendAdministratorPaymentsSummaryReports)}", ActivityKind.Internal, parentActivity.Context)
+                : _activitySource.StartActivity($"{nameof(SendAdministratorPaymentsSummaryReports)}");
             
             var requestUrl = $"{_notificationOptions.Url}/administrator-payment-summary/send";
             await ProcessSingleRequest(requestUrl, nameof(SendAdministratorPaymentsSummaryReports), stoppingToken);
@@ -121,7 +129,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         private async Task ProcessSingleRequest(string requestUrl, string operationName, CancellationToken stoppingToken)
         {
             using var response = await _client.PostAsync(requestUrl, new StringContent(string.Empty), stoppingToken);
-            var message = await response.Content.ReadAsStringAsync();
+            var message = await response.Content.ReadAsStringAsync(stoppingToken);
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogCritical($"Unsuccessful response for operation '{operationName}'. status: {response.StatusCode}. Message: {message}");
@@ -135,7 +143,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         private async Task ProcessBookings(string requestUrl, string processUrl, int chunkSize, string operationName, CancellationToken stoppingToken)
         {
             using var response = await _client.GetAsync(requestUrl, stoppingToken);
-            var message = await response.Content.ReadAsStringAsync();
+            var message = await response.Content.ReadAsStringAsync(stoppingToken);
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogCritical($"Unsuccessful response for operation '{operationName}'. status: {response.StatusCode}. Message: {message}");
@@ -162,7 +170,7 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
                 var json = JsonConvert.SerializeObject(forProcess);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 using var chunkResponse = await _client.PostAsync(processUrl, content, stoppingToken);
-                var chunkMessage = await chunkResponse.Content.ReadAsStringAsync();
+                var chunkMessage = await chunkResponse.Content.ReadAsStringAsync(stoppingToken);
 
                 if (chunkResponse.IsSuccessStatusCode)
                 {
@@ -181,15 +189,18 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         }
 
 
-        private async Task MaterializeMarkupBonuses(TelemetrySpan parentSpan, CancellationToken stoppingToken)
+        private async Task MaterializeMarkupBonuses(Activity? parentActivity, CancellationToken stoppingToken)
         {
-            using var scope = _tracer.StartActiveSpan($"{nameof(UpdaterService)}/{nameof(MaterializeMarkupBonuses)}", parentSpan, out _);
+            using var activity = parentActivity is not null 
+                ? _activitySource.StartActivity($"{nameof(MaterializeMarkupBonuses)}", ActivityKind.Internal, parentActivity.Context)
+                : _activitySource.StartActivity($"{nameof(MaterializeMarkupBonuses)}");
             
             var getUrl = $"{_markupBonusOptions.Url}/{DateTime.UtcNow:o}";
             await ProcessBookings(getUrl, _markupBonusOptions.Url, _markupBonusOptions.ChunkSize, nameof(MaterializeMarkupBonuses), stoppingToken);
         }
-
-
+        
+        
+        private readonly ActivitySource _activitySource = new(nameof(UpdaterService));
         private readonly IHostApplicationLifetime _applicationLifetime;
         private readonly CancellationOptions _cancellationOptions;
         private readonly NotificationOptions _notificationOptions;
@@ -198,6 +209,5 @@ namespace HappyTravel.Edo.PaymentProcessings.Services
         private readonly MarkupBonusMaterializationOptions _markupBonusOptions;
         private readonly ILogger<UpdaterService> _logger;
         private readonly HttpClient _client;
-        private readonly Tracer _tracer;
     }
 }

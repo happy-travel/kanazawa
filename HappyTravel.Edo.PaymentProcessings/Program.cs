@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
-using HappyTravel.Edo.PaymentProcessings.Infrastructure;
+using HappyTravel.Kanazawa.Infrastructure;
 using HappyTravel.StdOutLogger.Extensions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace HappyTravel.Edo.PaymentProcessings
+namespace HappyTravel.Kanazawa
 {
     public class Program
     {

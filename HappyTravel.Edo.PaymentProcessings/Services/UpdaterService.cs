@@ -5,13 +5,13 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using HappyTravel.Edo.PaymentProcessings.Models;
+using HappyTravel.Kanazawa.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
-namespace HappyTravel.Edo.PaymentProcessings.Services
+namespace HappyTravel.Kanazawa.Services
 {
     public class UpdaterService : BackgroundService
     {

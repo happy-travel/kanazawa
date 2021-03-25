@@ -2,7 +2,7 @@ using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
-namespace HappyTravel.Edo.PaymentProcessings.Infrastructure
+namespace HappyTravel.Kanazawa.Infrastructure
 {
     public static class EnvironmentVariableHelper
     {

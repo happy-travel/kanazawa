@@ -1,4 +1,4 @@
-﻿namespace HappyTravel.Edo.PaymentProcessings.Models
+﻿namespace HappyTravel.Kanazawa.Models
 {
     public class CancellationOptions
     {

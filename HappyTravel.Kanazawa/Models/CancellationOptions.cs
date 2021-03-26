@@ -1,6 +1,6 @@
-﻿namespace HappyTravel.Edo.PaymentProcessings.Models
+﻿namespace HappyTravel.Kanazawa.Models
 {
-    public class NotificationOptions
+    public class CancellationOptions
     {
         public string Url { get; set; }
         public int ChunkSize { get; set; }

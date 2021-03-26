@@ -5,7 +5,7 @@ using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-namespace HappyTravel.Edo.PaymentProcessings.Infrastructure
+namespace HappyTravel.Kanazawa.Infrastructure
 {
     public static class ServiceCollectionExtensions
     {

@@ -1,7 +1,7 @@
 ﻿using System;
-using HappyTravel.Edo.PaymentProcessings.Infrastructure;
-using HappyTravel.Edo.PaymentProcessings.Models;
-using HappyTravel.Edo.PaymentProcessings.Services;
+using HappyTravel.Kanazawa.Infrastructure;
+using HappyTravel.Kanazawa.Models;
+using HappyTravel.Kanazawa.Services;
 using HappyTravel.VaultClient;
 using IdentityModel.Client;
 using Microsoft.AspNetCore.Builder;
@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace HappyTravel.Edo.PaymentProcessings
+namespace HappyTravel.Kanazawa
 {
     public class Startup
     {

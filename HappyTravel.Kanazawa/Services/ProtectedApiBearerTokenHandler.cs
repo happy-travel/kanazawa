@@ -2,11 +2,11 @@
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using HappyTravel.Edo.PaymentProcessings.Models;
+using HappyTravel.Kanazawa.Models;
 using IdentityModel.Client;
 using Microsoft.Extensions.Options;
 
-namespace HappyTravel.Edo.PaymentProcessings.Services
+namespace HappyTravel.Kanazawa.Services
 {
     public class ProtectedApiBearerTokenHandler : DelegatingHandler
     {

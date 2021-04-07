@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Chart.Name }}-env
-  labels:
-    app: {{ .Chart.Name }}
-data:
-{{ toYaml .Values.env | indent 2 }}

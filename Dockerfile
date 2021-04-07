@@ -7,7 +7,7 @@ ENV ASPNETCORE_URLS http://*:80
 EXPOSE 80
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS build
 ARG GITHUB_TOKEN
 ARG Configuration=Release
 WORKDIR /src

@@ -65,8 +65,8 @@ namespace HappyTravel.Kanazawa.Services
                 ? _activitySource.StartActivity($"{nameof(CapturePayments)}", ActivityKind.Internal, parentActivity.Context)
                 : _activitySource.StartActivity($"{nameof(CapturePayments)}");
             
-            var getUrl = $"{_completionOptions.Url}/{DateTime.UtcNow:o}";
-            await ProcessBookings(getUrl, _completionOptions.Url, _completionOptions.ChunkSize, nameof(CapturePayments), stoppingToken);
+            var getUrl = $"{_completionOptions.RequestUrl}?date={DateTime.UtcNow:o}";
+            await ProcessBookings(getUrl, _completionOptions.ProcessingUrl, _completionOptions.ChunkSize, nameof(CapturePayments), stoppingToken);
         }
 
 
@@ -78,8 +78,8 @@ namespace HappyTravel.Kanazawa.Services
 
             var date = DateTime.UtcNow.AddDays(_chargeOptions.DaysBeforeDeadline);
 
-            var getUrl = $"{_chargeOptions.Url}/{date:o}";
-            await ProcessBookings(getUrl, _chargeOptions.Url, _chargeOptions.ChunkSize, nameof(ChargePayments), stoppingToken);
+            var getUrl = $"{_chargeOptions.RequestUrl}?date={date:o}";
+            await ProcessBookings(getUrl, _chargeOptions.ProcessingUrl, _chargeOptions.ChunkSize, nameof(ChargePayments), stoppingToken);
         }
 
 
@@ -89,7 +89,7 @@ namespace HappyTravel.Kanazawa.Services
                 ? _activitySource.StartActivity($"{nameof(CancelInvalidBookings)}", ActivityKind.Internal, parentActivity.Context)
                 : _activitySource.StartActivity($"{nameof(CancelInvalidBookings)}");
             
-            await ProcessBookings(_cancellationOptions.Url, _cancellationOptions.Url, _completionOptions.ChunkSize, nameof(CancelInvalidBookings), stoppingToken);
+            await ProcessBookings(_cancellationOptions.RequestUrl, _cancellationOptions.ProcessingUrl, _completionOptions.ChunkSize, nameof(CancelInvalidBookings), stoppingToken);
         }
 
 
@@ -195,7 +195,7 @@ namespace HappyTravel.Kanazawa.Services
                 ? _activitySource.StartActivity($"{nameof(MaterializeMarkupBonuses)}", ActivityKind.Internal, parentActivity.Context)
                 : _activitySource.StartActivity($"{nameof(MaterializeMarkupBonuses)}");
             
-            var getUrl = $"{_markupBonusOptions.Url}/{DateTime.UtcNow:o}";
+            var getUrl = $"{_markupBonusOptions.Url}?date={DateTime.UtcNow:o}";
             await ProcessBookings(getUrl, _markupBonusOptions.Url, _markupBonusOptions.ChunkSize, nameof(MaterializeMarkupBonuses), stoppingToken);
         }
         

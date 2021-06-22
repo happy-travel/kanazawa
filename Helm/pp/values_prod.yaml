@@ -65,3 +65,4 @@ env:
   HTDC_EDO_JOBS_SENTRY_ENDPOINT: "https://71a71d3e5e3141e2970a32f68b0743e6@sentry.happytravel.com/7"
   JAEGER_AGENT_HOST: "jaeger-agent"
   JAEGER_AGENT_PORT: "6831"
+  CONSUL_HTTP_ADDR: "https://consul.happytravel.com/"

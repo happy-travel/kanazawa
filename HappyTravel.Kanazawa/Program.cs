@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using HappyTravel.ConsulKeyValueClient.ConfigurationProvider.Extensions;
 using HappyTravel.Kanazawa.Infrastructure;
 using HappyTravel.StdOutLogger.Extensions;
 using Microsoft.AspNetCore.Hosting;
@@ -35,6 +36,9 @@ namespace HappyTravel.Kanazawa
                     config.AddJsonFile("appsettings.json", false, true)
                         .AddJsonFile($"appsettings.{environment.EnvironmentName}.json", true, true);
                     config.AddEnvironmentVariables();
+                    config.AddConsulKeyValueClient(Environment.GetEnvironmentVariable("CONSUL_HTTP_ADDR") ?? throw new InvalidOperationException("Consul endpoint is not set"),
+                        "kanazawa",
+                        Environment.GetEnvironmentVariable("CONSUL_HTTP_TOKEN") ?? throw new InvalidOperationException("Consul http token is not set"));
                 })
                 .ConfigureLogging((hostingContext, logging) =>
                 {
@@ -48,7 +52,7 @@ namespace HappyTravel.Kanazawa
                     {
                         logging.AddStdOutLogger(setup =>
                         {
-                            setup.IncludeScopes = false;
+                            setup.IncludeScopes = true;
                             setup.UseUtcTimestamp = true;
                         });
                         logging.AddSentry(c =>

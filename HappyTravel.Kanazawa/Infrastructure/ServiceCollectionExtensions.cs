@@ -20,8 +20,8 @@ namespace HappyTravel.Kanazawa.Infrastructure
             }
             else
             {
-                agentHost = "localhost"; //EnvironmentVariableHelper.Get("Jaeger:AgentHost", configuration);
-                agentPort = 6831;//int.Parse(EnvironmentVariableHelper.Get("Jaeger:AgentPort", configuration));
+                agentHost = EnvironmentVariableHelper.Get("Jaeger:AgentHost", configuration);
+                agentPort = int.Parse(EnvironmentVariableHelper.Get("Jaeger:AgentPort", configuration));
             }
             
             var serviceName = $"{environment.ApplicationName}-{environment.EnvironmentName}";

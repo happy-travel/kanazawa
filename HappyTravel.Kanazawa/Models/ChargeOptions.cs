@@ -2,7 +2,8 @@
 {
     public class ChargeOptions
     {
-        public string Url { get; set; }
+        public string RequestUrl { get; set; }
+        public string ProcessingUrl { get; set; }
         public int ChunkSize { get; set; }
         public int DaysBeforeDeadline { get; set; }
     }
